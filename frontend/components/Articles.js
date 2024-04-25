@@ -2,8 +2,7 @@ import React, { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import PT from 'prop-types'
 
-export default function Articles(props) {
-  console.log(props);
+export default function Articles({ articles, getArticles }) {
   
   useEffect(() => {
     getArticles()
