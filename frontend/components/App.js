@@ -88,17 +88,74 @@ export default function App() {
   }
 
   const postArticle = async article => {
-    // Similar implementation to getArticles, but with POST request
-  }
-
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:9000/api/articles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(article)
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to post article');
+      }
+  
+      const data = await response.json();
+      // Handle successful response, update state, show success message, etc.
+    } catch (error) {
+      console.error('Error posting article:', error);
+      // Handle error, show error message, etc.
+    }
+  };
+  
   const updateArticle = async ({ article_id, article }) => {
-    // Implement updating an article
-  }
-
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:9000/api/articles/${article_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(article)
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to update article');
+      }
+  
+      const data = await response.json();
+      // Handle successful response, update state, show success message, etc.
+    } catch (error) {
+      console.error('Error updating article:', error);
+      // Handle error, show error message, etc.
+    }
+  };
+  
   const deleteArticle = async article_id => {
-    // Implement deleting an article
-  }
-
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:9000/api/articles/${article_id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to delete article');
+      }
+  
+      // Handle successful response, update state, show success message, etc.
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      // Handle error, show error message, etc.
+    }
+  };
+  
   return (
     <>
       <Spinner spinnerOn={spinnerOn} />
