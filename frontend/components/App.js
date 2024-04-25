@@ -169,6 +169,8 @@ export default function App() {
         </nav>
         <Routes>
           <Route path="/" element={<LoginForm login={login} />} />
+          <Route path="/articles" element={<Articles articles={articles} getArticles={getArticles} />} />
+
           <Route path="articles" element={
             <>
               <ArticleForm postArticle={postArticle} />
