@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { NavLink, Routes, Route, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import Articles from './Articles'
 import LoginForm from './LoginForm'
 import Message from './Message'
@@ -31,79 +32,61 @@ export default function App() {
   }
 
   const login = async ({ username, password }) => {
-    setMessage('')
-    setSpinnerOn(true)
-
+    setMessage('');
+    setSpinnerOn(true);
+  
     try {
-      const response = await fetch(loginUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      })
-
-      if (!response.ok) {
-        throw new Error('Login failed')
-      }
-
-      const data = await response.json()
-      localStorage.setItem('token', data.token)
-      setMessage(data.message)
-      redirectToArticles()
+      const response = await axios.post(loginUrl, {
+        username,
+        password
+      });
+  
+      const data = response.data;
+      localStorage.setItem('token', data.token);
+      setMessage(data.message);
+      redirectToArticles();
     } catch (error) {
-      setMessage('Login failed')
+      setMessage('Login failed');
     } finally {
-      setSpinnerOn(false)
+      setSpinnerOn(false);
     }
-  }
+  };
 
   const getArticles = async () => {
-    setMessage('')
-    setSpinnerOn(true)
-
+    setMessage('');
+    setSpinnerOn(true);
+  
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch(articlesUrl, {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(articlesUrl, {
         headers: {
           Authorization: `Bearer ${token}`
         }
-      })
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          redirectToLogin()
-        }
-        throw new Error('Failed to fetch articles')
-      }
-
-      const data = await response.json()
-      setArticles(data.articles)
-      setMessage(data.message)
-    } catch (error) {
-      setMessage('Failed to fetch articles')
-    } finally {
-      setSpinnerOn(false)
-    }
-  }
-
-  const postArticle = async article => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:9000/api/articles', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(article)
       });
   
-      if (!response.ok) {
-        throw new Error('Failed to post article');
+      const data = response.data;
+      setArticles(data.articles);
+      setMessage(data.message);
+    } catch (error) {
+      setMessage('Failed to fetch articles');
+      if (error.response && error.response.status === 401) {
+        redirectToLogin();
       }
+    } finally {
+      setSpinnerOn(false);
+    }
+  };
+  const postArticle = async (article) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post('http://localhost:9000/api/articles', article, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
   
-      const data = await response.json();
+      const data = response.data;
       // Handle successful response, update state, show success message, etc.
     } catch (error) {
       console.error('Error posting article:', error);
@@ -114,20 +97,14 @@ export default function App() {
   const updateArticle = async ({ article_id, article }) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:9000/api/articles/${article_id}`, {
-        method: 'PUT',
+      const response = await axios.put(`http://localhost:9000/api/articles/${article_id}`, article, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(article)
+          Authorization: `Bearer ${token}`
+        }
       });
   
-      if (!response.ok) {
-        throw new Error('Failed to update article');
-      }
-  
-      const data = await response.json();
+      const data = response.data;
       // Handle successful response, update state, show success message, etc.
     } catch (error) {
       console.error('Error updating article:', error);
@@ -135,19 +112,14 @@ export default function App() {
     }
   };
   
-  const deleteArticle = async article_id => {
+  const deleteArticle = async (article_id) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:9000/api/articles/${article_id}`, {
-        method: 'DELETE',
+      const response = await axios.delete(`http://localhost:9000/api/articles/${article_id}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         }
       });
-  
-      if (!response.ok) {
-        throw new Error('Failed to delete article');
-      }
   
       // Handle successful response, update state, show success message, etc.
     } catch (error) {
@@ -170,7 +142,6 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LoginForm login={login} />} />
           <Route path="/articles" element={<Articles articles={articles} getArticles={getArticles} />} />
-
           <Route path="articles" element={
             <>
               <ArticleForm postArticle={postArticle} />
