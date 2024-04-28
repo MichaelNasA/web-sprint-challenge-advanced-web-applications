@@ -1,52 +1,60 @@
-import React, { useState } from 'react'
-import { NavLink, Routes, Route, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import Articles from './Articles'
-import LoginForm from './LoginForm'
-import Message from './Message'
-import ArticleForm from './ArticleForm'
-import Spinner from './Spinner'
+import React, { useState, useEffect } from 'react';
+import { NavLink, Routes, Route, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import Articles from './Articles';
+import LoginForm from './LoginForm';
+import Message from './Message';
+import ArticleForm from './ArticleForm';
+import Spinner from './Spinner';
 
-const articlesUrl = 'http://localhost:9000/api/articles'
-const loginUrl = 'http://localhost:9000/api/login'
+const articlesUrl = 'http://localhost:9000/api/articles';
+const loginUrl = 'http://localhost:9000/api/login';
 
-export default function App() {
-  const [message, setMessage] = useState('')
-  const [articles, setArticles] = useState([])
-  const [currentArticleId, setCurrentArticleId] = useState()
-  const [spinnerOn, setSpinnerOn] = useState(false)
-  const navigate = useNavigate()
+const App = () => {
+  const [message, setMessage] = useState('');
+  const [articles, setArticles] = useState([]);
+  const [currentArticleId, setCurrentArticleId] = useState();
+  const [spinnerOn, setSpinnerOn] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (localStorage.getItem('token')) {
+      getArticles();
+    }
+  }, []);
 
   const redirectToLogin = () => {
-    navigate('/')
-  }
+    navigate('/');
+  };
 
   const redirectToArticles = () => {
-    navigate('/articles')
-  }
+    navigate('/articles');
+  };
 
   const logout = () => {
-    localStorage.removeItem('token')
-    setMessage('Goodbye!')
-    redirectToLogin()
-  }
+    localStorage.removeItem('token');
+    setMessage('Goodbye!');
+    redirectToLogin();
+  };
+
+  const handleError = (error) => {
+    console.error('Error:', error);
+    setMessage(error.response ? error.response.data.message : 'An error occurred');
+  };
 
   const login = async ({ username, password }) => {
     setMessage('');
     setSpinnerOn(true);
-  
+
     try {
-      const response = await axios.post(loginUrl, {
-        username,
-        password
-      });
-  
+      const response = await axios.post(loginUrl, { username, password });
       const data = response.data;
       localStorage.setItem('token', data.token);
       setMessage(data.message);
       redirectToArticles();
     } catch (error) {
       setMessage('Login failed');
+      handleError(error);
     } finally {
       setSpinnerOn(false);
     }
@@ -55,20 +63,18 @@ export default function App() {
   const getArticles = async () => {
     setMessage('');
     setSpinnerOn(true);
-  
+
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(articlesUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `${token}` },
       });
-  
       const data = response.data;
       setArticles(data.articles);
       setMessage(data.message);
     } catch (error) {
       setMessage('Failed to fetch articles');
+      handleError(error);
       if (error.response && error.response.status === 401) {
         redirectToLogin();
       }
@@ -76,58 +82,54 @@ export default function App() {
       setSpinnerOn(false);
     }
   };
+
   const postArticle = async (article) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:9000/api/articles', article, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
+      const response = await axios.post(articlesUrl, article, {
+        headers: { 'Content-Type': 'application/json', Authorization: `${token}` },
       });
-  
       const data = response.data;
       // Handle successful response, update state, show success message, etc.
+      setMessage(data.message);
+      getArticles(); // Refresh articles after posting new one
     } catch (error) {
-      console.error('Error posting article:', error);
-      // Handle error, show error message, etc.
+      setMessage('Error posting article');
+      handleError(error);
     }
   };
-  
+
   const updateArticle = async ({ article_id, article }) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(`http://localhost:9000/api/articles/${article_id}`, article, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
+      const response = await axios.put(`${articlesUrl}/${article_id}`, article, {
+        headers: { 'Content-Type': 'application/json', Authorization: `${token}` },
       });
-  
       const data = response.data;
       // Handle successful response, update state, show success message, etc.
+      setMessage(data.message);
+      getArticles(); // Refresh articles after updating
     } catch (error) {
-      console.error('Error updating article:', error);
-      // Handle error, show error message, etc.
+      setMessage('Error updating article');
+      handleError(error);
     }
   };
-  
+
   const deleteArticle = async (article_id) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.delete(`http://localhost:9000/api/articles/${article_id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-  
-      // Handle successful response, update state, show success message, etc.
-    } catch (error) {
-      console.error('Error deleting article:', error);
-      // Handle error, show error message, etc.
-    }
+    // try {
+    //   const token = localStorage.getItem('token');
+    //   const response = await axios.delete(`${articlesUrl}/${article_id}`, {
+    //     headers: { Authorization: `Bearer ${token}` },
+    //   });
+    //   // Handle successful response, update state, show success message, etc.
+    //   setMessage(response.data.message);
+    //   getArticles(); // Refresh articles after deleting
+    // } catch (error) {
+    //   setMessage('Error deleting article');
+    //   handleError(error);
+    // }
   };
-  
+
   return (
     <>
       <Spinner spinnerOn={spinnerOn} />
@@ -142,15 +144,13 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LoginForm login={login} />} />
           <Route path="/articles" element={<Articles articles={articles} getArticles={getArticles} />} />
-          <Route path="articles" element={
-            <>
-              <ArticleForm postArticle={postArticle} />
-              <Articles articles={articles} getArticles={getArticles} />
-            </>
-          } />
+          <Route path="/create-article" element={<ArticleForm postArticle={postArticle} />} />
+          <Route path="/edit-article/:id" element={<ArticleForm updateArticle={updateArticle} />} />
         </Routes>
         <footer>Bloom Institute of Technology 2024</footer>
       </div>
     </>
-  )
-}
+  );
+};
+
+export default App;
