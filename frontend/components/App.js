@@ -10,7 +10,7 @@ import Spinner from './Spinner';
 const articlesUrl = 'http://localhost:9000/api/articles';
 const loginUrl = 'http://localhost:9000/api/login';
 
-const App = () => {
+export default function App() {
   const [message, setMessage] = useState('');
   const [articles, setArticles] = useState([]);
   const [currentArticleId, setCurrentArticleId] = useState();
@@ -115,20 +115,44 @@ const App = () => {
     }
   };
 
-  const deleteArticle = async (article_id) => {
-    // try {
-    //   const token = localStorage.getItem('token');
-    //   const response = await axios.delete(`${articlesUrl}/${article_id}`, {
-    //     headers: { Authorization: `Bearer ${token}` },
-    //   });
-    //   // Handle successful response, update state, show success message, etc.
-    //   setMessage(response.data.message);
-    //   getArticles(); // Refresh articles after deleting
-    // } catch (error) {
-    //   setMessage('Error deleting article');
-    //   handleError(error);
-    // }
-  };
+  // const deleteArticle = async (currentArticleId, setCurrentArticleId) => {
+  //   try {
+  //     const token = localStorage.getItem('token');
+  //     const deleteArticle = await axios.delete(`${currentArticleId}/${setCurrentArticleId}`, {
+  //       headers: { Authorization: `${token}` },
+  //     });
+  //     // Handle successful response, update state, show success message, etc.
+  //     setMessage(deleteArticle.data.message);
+  //     getArticles(); // Refresh articles after deleting
+  //   } catch (error) {
+  //     setMessage('Error deleting article');
+  //     handleError(error);
+  //   }
+  // };
+  const deleteArticle = article_id => {
+    // ✨ implement
+    setMessage('')
+    setSpinnerOn(true)
+    axios.delete(`${articlesUrl}/${article_id}`, { headers: { Authorization: localStorage.getItem('token') } })
+      .then(res => {
+        setMessage(res.data.message)
+        setArticles(articles => {
+          return articles.filter(art => {
+            return art.article_id != article_id
+          })
+        })
+      })
+      .catch(err => {
+        setMessage(err?.response?.data?.message || 'Something bad happened')
+        if (err.response.status == 401) {
+          redirectToLogin()
+        }
+      })
+      .finally(() => {
+        setSpinnerOn(false)
+      })
+  }
+  
 
   return (
     <>
@@ -151,6 +175,4 @@ const App = () => {
       </div>
     </>
   );
-};
-
-export default App;
+}
