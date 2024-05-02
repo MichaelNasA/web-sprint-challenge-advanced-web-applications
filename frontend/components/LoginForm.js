@@ -5,9 +5,9 @@ const initialFormValues = {
   username: '',
   password: '',
 }
-
-export default function LoginForm({ login }) {
+export default function LoginForm(props) {
   const [values, setValues] = useState(initialFormValues)
+  // ✨ where are my props? Destructure them here
 
   const onChange = evt => {
     const { id, value } = evt.target
@@ -16,11 +16,15 @@ export default function LoginForm({ login }) {
 
   const onSubmit = evt => {
     evt.preventDefault()
-    login(values)
+    props.login(values)
   }
 
   const isDisabled = () => {
-    return values.username.trim().length < 3 || values.password.trim().length < 8
+    // ✨ implement
+    // Trimmed username must be >= 3, and
+    // trimmed password must be >= 8 for
+    // the button to become enabled
+    return !(values.username.trim().length >= 3 && values.password.trim().length >= 8);
   }
 
   return (
@@ -45,6 +49,7 @@ export default function LoginForm({ login }) {
   )
 }
 
+// 🔥 No touchy: LoginForm expects the following props exactly:
 LoginForm.propTypes = {
   login: PT.func.isRequired,
 }
